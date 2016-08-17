@@ -46,7 +46,6 @@ print "A list: %s" % mylist
 %x/%X - Integers in hex representation(lowercase/uppercase)
 ```
 
-
 ### Basic string operations
 ```
 astring = "Hello world!"
@@ -61,13 +60,11 @@ reverse a string like
 ```
 print astring[::-1]
 ```
+```
 print astring.upper()
 print astring.lower()
 print astring.startswith("hello")
 print astring.endswith("asfsfsfsf")
 afewwords = astring.split(" ")
 ```
-
-
-
 original: http://www.learnpython.org/en/Basic_Operators
