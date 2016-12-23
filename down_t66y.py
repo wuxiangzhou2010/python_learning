@@ -8,6 +8,8 @@ import shutil
 import wget
 from urllib import FancyURLopener
 import sys
+
+
 base_dir=u"Down/"
 if os.path.exists(base_dir):
     if os.name == 'nt':
@@ -36,17 +38,30 @@ def get_ext(url):
     root, ext = splitext(parsed.path)
     return ext  # or ext[1:] if you don't want the leading '.'
 print sys.argv[1]
+image_type= ["&jpg"]
+
+total = 0
+downloaded = 0
+percent = 0
+
+with jsonlines.open(sys.argv[1]+'.jsonlines') as reader:
+    for obj in reader:
+        image_list = obj["t_image_list"] # get image list
+        if image_list: # if image list not NULL
+		            for image in image_list:
+						total=total+1
+						
 with jsonlines.open(sys.argv[1]+'.jsonlines') as reader:
     for obj in reader:
         # print obj
         dir_name=base_dir+ u''.join(e for e in obj["t_title"] if e.isalnum())  # remove special character for the name and path
-        print dir_name
+        # print dir_name
         if dir_name.endswith("poweredbyphpwindnet"):  # remove php title
             dir_name=dir_name[:-19]
             if len(dir_name) > 100:
                 dir_name=dir_name[:100]
-                print dir_name
-                time.sleep(10)
+        print dir_name
+                # time.sleep(10)
         if os.path.exists(dir_name): # if dir not exist, make it
             if os.name=='nt':
                 # os.removedirs(dir_name)
@@ -54,13 +69,20 @@ with jsonlines.open(sys.argv[1]+'.jsonlines') as reader:
         else:
             os.mkdir(dir_name)
         image_list = obj["t_image_list"] # get image list
+        
         if image_list: # if image list not NULL
             i=0
             for image in image_list:
                 #print image
-                ext= get_ext(image) ## get image type
+                ext = str(image[-4:])
+                if ext in image_type:
+                    pass
+                    # ext=".jpg"
+                else:
+                    image_type.append(ext)
                 # if str(ext) is ".php" or str(ext[-4:-1]) is "&jpg":
-                if str(ext) == ".php" or str(ext).endswith("&jpg"):
+                ext= str(get_ext(image)) ## get image type
+                if str(ext) == ".php" or str(image[-4:]) =="&jpg":
                     ext=".jpg"
                     print ext + "wuxiang######"
                 name= dir_name + "/"+ str(i) +ext
@@ -71,9 +93,10 @@ with jsonlines.open(sys.argv[1]+'.jsonlines') as reader:
                 # opener.retrieve(image, name)
                 # opener.retrieve(image, name)
                 if os.path.exists(name):
-                    pass
+                    downloaded = downloaded+1
                 else:
                     try:
+                        # pass
                         myopener.retrieve(image,name)
                     except Exception, e:
                         print "myopener EORROR" + dir_name + "/"+ str(i)+":"+unicode(e)
@@ -86,8 +109,12 @@ with jsonlines.open(sys.argv[1]+'.jsonlines') as reader:
                 # print dir_name+"/"+str(i)+get_ext(image)
                 # print name
                     i=i+1
+                    downloaded = downloaded+1
+                    percent = (downloaded*100/total)
+                    print "%s%%  downloaded  %s/%s" % (percent, downloaded, total)
                     #time.sleep(0.5)
         else:
             pass
+print image_type
         #for line in obj[u't_image_list']:
 
