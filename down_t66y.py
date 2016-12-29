@@ -66,7 +66,7 @@ def fetch_url(url):
     global g_downloaded
     global g_downloaded_percentage
     global g_total_image_count
-    (return_code, name) = check_if_to_downloas(url)
+    (return_code, name) = check_if_to_download(url)
     if return_code == 0:
         try:
             myopener = MyOpener()
@@ -106,12 +106,12 @@ def threading_download2(image_list):
 				#break
 
 
-def check_if_to_downloas(image):
+def check_if_to_download(image):
     global g_temp_image_num
     global g_downloaded
     global g_current_dir
     g_thread_lock.acquire()
-    # g_temp_image_num += 1
+    g_temp_image_num += 1
     i = g_temp_image_num
     g_thread_lock.release()
     ext = str(image[-4:])
@@ -127,7 +127,7 @@ def check_if_to_downloas(image):
     if os.path.exists(name):
         if  verify_image(name): # image ok
             print "###############verified"
-            g_downloaded = g_downloaded+1
+            g_downloaded += 1
             return -1, ""
         else:
             os.remove(name)
@@ -135,13 +135,14 @@ def check_if_to_downloas(image):
     else:
         g_temp_image_num += 1
         return 0, name
-      
-with jsonlines.open(sys.argv[1]+'.jsonlines') as reader:
-    for obj in reader:
-        image_list = obj["t_image_list"] # get image list
-        if image_list: # if image list not NULL
-            for image in image_list:
-                    total=total+1
+def get_total_image_number():
+    global g_total_image_count
+    with jsonlines.open(sys.argv[1]+'.jsonlines') as reader:
+        for obj in reader:
+            image_list = obj["t_image_list"] # get image list
+            if image_list: # if image list not NULL
+                for image in image_list:
+                    g_total_image_count += 1
 		
 def main():
     global g_image_type
@@ -165,7 +166,7 @@ def main():
             
             if image_list: # if image list not NULL
                 g_temp_image_num = 0
-                threading_download(image_list)
+                threading_download2(image_list)
             else:
                 pass
             g_current_dir = ""
