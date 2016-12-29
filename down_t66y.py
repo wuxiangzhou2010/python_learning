@@ -63,6 +63,7 @@ print sys.argv[1]
 def fetch_url(url):
     global downloaded
     global percent
+    global total
     (return_code, name) = check_if_to_downloas(url)
     if return_code == 0:
         try:
@@ -118,18 +119,20 @@ def check_if_to_downloas(image):
     else:
         temp_i += 1
         return 0, name
-      
-with jsonlines.open(sys.argv[1]+'.jsonlines') as reader:
-    for obj in reader:
-        image_list = obj["t_image_list"] # get image list
-        if image_list: # if image list not NULL
-            for image in image_list:
-                total=total+1
+def get_total_image_number(): 
+    global total    
+    with jsonlines.open(sys.argv[1]+'.jsonlines') as reader:
+        for obj in reader:
+            image_list = obj["t_image_list"] # get image list
+            if image_list: # if image list not NULL
+                for image in image_list:
+                    total=total+1
 						
 def main():
     global image_type
     global dir_name
     global temp_i
+    get_total_image_number()
     with jsonlines.open(sys.argv[1]+'.jsonlines') as reader:
         for obj in reader:
             dir_name=base_dir+ u''.join(e for e in obj["t_title"] if e.isalnum())  # remove special character for the name and path
@@ -139,11 +142,11 @@ def main():
                 if len(dir_name) > 100:
                     dir_name=dir_name[:100]
             print dir_name
-            if os.path.exists(dir_name): # if dir not exist, make it
+            if os.path.exists(dir_name):
                 if os.name=='nt':
                     shutil.rmtree(dir_name)
             else:
-                os.mkdir(dir_name)
+                os.mkdir(dir_name) # if dir not exist, make it
             image_list = obj["t_image_list"] # get image list
             
             if image_list: # if image list not NULL
