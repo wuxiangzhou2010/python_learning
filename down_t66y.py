@@ -89,13 +89,24 @@ def threading_download(image_list):
     # while threading.active_count() > 0:
         # time.sleep(0.1)
 
+def threading_download2(image_list):	
+	global temp_i
+	length = len(image_list)
+	while temp_i < length-1:	
+		count = threading.activeCount()
+		if count < 12:
+			print "temp_i == " +str(temp_i), "len = " +str(length)
+			threads = threading.Thread(target=fetch_url, args=(image_list[temp_i],))
+			threads.start()
+			print "active thread count  == " + str(count)
+
 def check_if_to_downloas(image):
     global temp_i
     global downloaded
     global dir_name
     mutex.acquire()
-    # temp_i += 1
     i = temp_i
+    temp_i += 1
     mutex.release()
     ext = str(image[-4:])
     if ext in image_type:
@@ -116,7 +127,7 @@ def check_if_to_downloas(image):
             os.remove(name)
             return 0, name
     else:
-        temp_i += 1
+        #temp_i += 1
         return 0, name
       
 with jsonlines.open(sys.argv[1]+'.jsonlines') as reader:
@@ -148,7 +159,7 @@ def main():
             
             if image_list: # if image list not NULL
                 temp_i = 0
-                threading_download(image_list)
+                threading_download2(image_list)
             else:
                 pass
             dir_name = ""
