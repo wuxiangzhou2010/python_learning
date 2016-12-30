@@ -24,6 +24,7 @@ total = 0
 downloaded = 0
 percent = 0
 mutex = Lock()
+max_thread_count = 0
 
 
 def verify_image(image_name):
@@ -63,23 +64,18 @@ def get_ext(url):
     return ext  # or ext[1:] if you don't want the leading '.'
 print sys.argv[1]
 
-def fetch_url(url):
+def fetch_url(url, name):
     global downloaded
     global percent
-    (return_code, name) = check_if_to_downloas(url)
-    if return_code == 0:
-        try:
-            myopener = MyOpener()
-            print "downloading",url
-            myopener.retrieve(url,name)
-            downloaded = downloaded+1
-            percent = (downloaded*100/total)
-            print "%s%%  downloaded  %s/%s" % (percent, downloaded, total)
-        except Exception, e:
-            print "myopener EORROR name:" + name +" ERROR_CODE:"+":"+unicode(e) 
-    else:
-        pass
-    # print "'%s\' fetched in %ss" % (url, (time.time() - start))
+    try:
+        myopener = MyOpener()
+        print "downloading",url
+        myopener.retrieve(url,name)
+        downloaded = downloaded+1
+        percent = (downloaded*100/total)
+        print "%s%%  downloaded  %s/%s" % (percent, downloaded, total)
+    except Exception, e:
+        print "myopener EORROR name:" + name +" ERROR_CODE:"+":"+unicode(e) 
 
 def threading_download(image_list):
     global temp_i
@@ -96,14 +92,16 @@ def threading_download2(image_list):
     global temp_i
     global pattern
     length = len(image_list)
-    while temp_i < length-1:	
+    #global name
+    (return_code, name) = check_if_to_downloas(image_list[temp_i])
+    while temp_i < length-1 and return_code:	
         count = threading.activeCount()
         if count < 24:
             print "temp_i = " +str(temp_i), "len = " +str(length)
-            if pattern.search(str(image_list[temp_i])):
+            if pattern.search(image_list[temp_i]):
                 temp_i += 1
             else:
-                threads = threading.Thread(target=fetch_url, args=(image_list[temp_i],))
+                threads = threading.Thread(target=fetch_url, args=(image_list[temp_i],name))
                 threads.start()
             print "active thread count  = " + str(count)
 
@@ -111,10 +109,7 @@ def check_if_to_downloas(image):
     global temp_i
     global downloaded
     global dir_name
-    mutex.acquire()
     i = temp_i
-    temp_i += 1
-    mutex.release()
     ext = str(image[-4:])
     if ext in image_type:
         pass
@@ -129,13 +124,16 @@ def check_if_to_downloas(image):
         if  verify_image(name): # image ok
             print "###############verified"
             downloaded = downloaded+1
-            return -1, ""
+            return 1, ""
         else:
             os.remove(name)
             return 0, name
     else:
         #temp_i += 1
-        return 0, name
+        return -1, name
+    mutex.acquire()
+    temp_i += 1
+    mutex.release()
       
 with jsonlines.open(sys.argv[1]+'.jsonlines') as reader:
     for obj in reader:
@@ -143,11 +141,15 @@ with jsonlines.open(sys.argv[1]+'.jsonlines') as reader:
         if image_list: # if image list not NULL
             for image in image_list:
                 total=total+1
-						
+
+
 def main():
     global image_type
     global dir_name
     global temp_i
+    global max_thread_count
+    max_thread_count = sys.argv[2]
+    print "max_thread_count = " + str(max_thread_count)
     with jsonlines.open(sys.argv[1]+'.jsonlines') as reader:
         for obj in reader:
             dir_name=base_dir+ u''.join(e for e in obj["t_title"] if e.isalnum())  # remove special character for the name and path
