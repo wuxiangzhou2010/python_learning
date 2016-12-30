@@ -12,6 +12,9 @@ import threading
 from threading import Thread, Lock
 
 from PIL import Image
+import re
+
+pattern = re.compile(r'fuskator') # some url seems blocked
 
 base_dir=u"Down/"
 temp_i=0
@@ -90,15 +93,19 @@ def threading_download(image_list):
         # time.sleep(0.1)
 
 def threading_download2(image_list):	
-	global temp_i
-	length = len(image_list)
-	while temp_i < length-1:	
-		count = threading.activeCount()
-		if count < 12:
-			print "temp_i == " +str(temp_i), "len = " +str(length)
-			threads = threading.Thread(target=fetch_url, args=(image_list[temp_i],))
-			threads.start()
-			print "active thread count  == " + str(count)
+    global temp_i
+    global pattern
+    length = len(image_list)
+    while temp_i < length-1:	
+        count = threading.activeCount()
+        if count < 24:
+            print "temp_i = " +str(temp_i), "len = " +str(length)
+            if pattern.search(str(image_list[temp_i])):
+                temp_i += 1
+            else:
+                threads = threading.Thread(target=fetch_url, args=(image_list[temp_i],))
+                threads.start()
+            print "active thread count  = " + str(count)
 
 def check_if_to_downloas(image):
     global temp_i
