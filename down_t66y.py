@@ -28,12 +28,17 @@ max_thread_count = 0
 
 
 def verify_image(image_name):
-    v_image = Image.open(image_name)
-    if v_image.verify():
+    try:    
+        v_image = Image.open(image_name)
+        # print "v_image.verify() " +str(v_image.verify())
+        # if  v_image.verify():
+        v_image.verify()
         print "image is ok"
         return True
-    else:
-        print "image is wrong"
+        # else:
+            # print "image is wrong"
+    except Exception, e:
+        print "verify_image  ERROR_CODE:"+":"+unicode(e) 
         return False
         
 
@@ -73,8 +78,8 @@ def fetch_url(url, name):
         print "downloading",url
         myopener.retrieve(url,name)
         downloaded = downloaded+1
-        percent = (downloaded*100/total)
-        print "%s%%  downloaded  %s/%s" % (percent, downloaded, total)
+        # percent = (downloaded*100/total)
+        # print "%s%%  downloaded  %s/%s" % (percent, downloaded, total)
     except Exception, e:
         print "myopener EORROR name:" + name +" ERROR_CODE:"+":"+unicode(e) 
 
@@ -99,17 +104,21 @@ def threading_download2(image_list):
         (return_code, name) = check_if_to_downloas(image)
         count = threading.activeCount()
         if return_code:
-            while threading.activeCount() >5:
+            while threading.activeCount() >2:
                 pass
             print "temp_i = " +str(temp_i), "len = " +str(length)
             if pattern.search(image):
-                temp_i += 1
+                #temp_i += 1
+                print "blocked url"
+                pass # blocked url
             else:
                 threads = threading.Thread(target=fetch_url, args=(image,name))
                 threads.start()
             print "active thread count  = " + str(count)
         else:
             pass
+        percent = (downloaded*100/total)
+        print "%s%%  downloaded  %s/%s" % (percent, downloaded, total)
         mutex.acquire()
         temp_i += 1
         mutex.release()
@@ -132,15 +141,15 @@ def check_if_to_downloas(image):
     # print "downloading",image
     if os.path.exists(name):
         if  verify_image(name): # image ok
-            print "###############verified"
+            print "#### verified ####"
             downloaded = downloaded+1
-            return 1, ""
+            return False, ""
         else:
             os.remove(name)
-            return 0, name
+            return True, name
     else:
         #temp_i += 1
-        return -1, name
+        return True, name
       
 with jsonlines.open(sys.argv[1]+'.jsonlines') as reader:
     for obj in reader:
