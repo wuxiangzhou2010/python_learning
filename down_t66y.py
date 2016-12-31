@@ -30,8 +30,10 @@ max_thread_count = 0
 def verify_image(image_name):
     v_image = Image.open(image_name)
     if not v_image.verify():
+        print "image is ok"
         return True
     else:
+        print "image is wrong"
         return False
         
 
@@ -96,7 +98,7 @@ def threading_download2(image_list):
     (return_code, name) = check_if_to_downloas(image_list[temp_i])
     while temp_i < length-1 and return_code:	
         count = threading.activeCount()
-        if count < 24:
+        if count < 4:
             print "temp_i = " +str(temp_i), "len = " +str(length)
             if pattern.search(image_list[temp_i]):
                 temp_i += 1
