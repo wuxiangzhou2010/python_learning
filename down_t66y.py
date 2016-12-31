@@ -29,7 +29,7 @@ max_thread_count = 0
 
 def verify_image(image_name):
     v_image = Image.open(image_name)
-    if not v_image.verify():
+    if v_image.verify():
         print "image is ok"
         return True
     else:
@@ -37,15 +37,15 @@ def verify_image(image_name):
         return False
         
 
-
-if os.path.exists(base_dir):
-    if os.name == 'nt':
-        # os.removedirs(dir_name)
-        shutil.rmtree(base_dir)
+def make_del_dir():
+    if os.path.exists(base_dir):
+        if os.name == 'nt':
+            # os.removedirs(dir_name)
+            shutil.rmtree(base_dir)
+        else:
+            pass
     else:
-        pass
-else:
-    os.mkdir(base_dir)
+        os.mkdir(base_dir)
 # data = []
 # with open('C:\Users\\xihaj\PycharmProjects\\test\DaGaiErDeQiZhi.jsonlines') as f:
 #     for line in f:
@@ -64,7 +64,6 @@ def get_ext(url):
     parsed = urlparse(url)
     root, ext = splitext(parsed.path)
     return ext  # or ext[1:] if you don't want the leading '.'
-print sys.argv[1]
 
 def fetch_url(url, name):
     global downloaded
@@ -94,23 +93,32 @@ def threading_download2(image_list):
     global temp_i
     global pattern
     length = len(image_list)
-    #global name
-    (return_code, name) = check_if_to_downloas(image_list[temp_i])
-    while temp_i < length-1 and return_code:	
+    while temp_i < length:	
+        image = image_list[temp_i]
+        #global name
+        (return_code, name) = check_if_to_downloas(image)
         count = threading.activeCount()
-        if count < 4:
+        if return_code:
+            while threading.activeCount() >5:
+                pass
             print "temp_i = " +str(temp_i), "len = " +str(length)
-            if pattern.search(image_list[temp_i]):
+            if pattern.search(image):
                 temp_i += 1
             else:
-                threads = threading.Thread(target=fetch_url, args=(image_list[temp_i],name))
+                threads = threading.Thread(target=fetch_url, args=(image,name))
                 threads.start()
             print "active thread count  = " + str(count)
-
+        else:
+            pass
+        mutex.acquire()
+        temp_i += 1
+        mutex.release()
+        
 def check_if_to_downloas(image):
     global temp_i
     global downloaded
     global dir_name
+    global image_type
     i = temp_i
     ext = str(image[-4:])
     if ext in image_type:
@@ -133,9 +141,6 @@ def check_if_to_downloas(image):
     else:
         #temp_i += 1
         return -1, name
-    mutex.acquire()
-    temp_i += 1
-    mutex.release()
       
 with jsonlines.open(sys.argv[1]+'.jsonlines') as reader:
     for obj in reader:
@@ -150,6 +155,8 @@ def main():
     global dir_name
     global temp_i
     global max_thread_count
+    
+    make_del_dir()
     max_thread_count = sys.argv[2]
     print "max_thread_count = " + str(max_thread_count)
     with jsonlines.open(sys.argv[1]+'.jsonlines') as reader:
