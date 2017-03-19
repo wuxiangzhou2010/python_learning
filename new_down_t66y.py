@@ -31,9 +31,6 @@ base_dir=u"Down/"
 temp_i=0
 dir_name = ""
 image_type= ["&jpg"]
-total = 0
-downloaded = 0
-percent = 0
 mutex = Lock()
 max_thread_count = 0
 list = [] #all the url and name are stored in the list
@@ -46,10 +43,14 @@ list = [] #all the url and name are stored in the list
 #                 total=total+1
 
 class Producer:
+    total = 0
+    downloaded = 0
+    percent = 0
 # get all the list, with path and name
     def __init__(self):
-        pass
-
+        self.percent = 0
+        self.total = 0
+        self.downloaded = 0
     def check_make_dir(self, dir_name):
         if not os.path.exists(dir_name): # if folder exist, make it
             if os.name=='nt':
@@ -131,6 +132,13 @@ class Producer:
         with jsonlines.open(sys.argv[1]+'.jsonlines') as reader:
             for obj in reader:# title & image list
                 list.append(obj.copy())
+		# get item number
+        self.total = len(list)
+
+	# get download percentage
+    def print_progress(self): 
+        self.percent = self.downloaded*10/(self.total*0.1)
+        print "%.4f%%  downloaded  %s/%s" % (self.percent, self.downloaded, self.total)
 
     def get_all_links(self,lock):
         #lock.acquire(1)
@@ -139,6 +147,8 @@ class Producer:
                 # title as the folder name
         #lock.release()
         self.get_all_boj_image(obj)
+        self.downloaded = self.downloaded + 1
+        self.print_progress()
                 
 
     def get_ext(url):
@@ -216,6 +226,7 @@ def main():
     #print "max_thread_count = " + str(max_thread_count)
     p = Producer();
     p.parse_jsonlines()
+    p.check_make_dir(base_dir);
     # p.get_all_links()
 
 
