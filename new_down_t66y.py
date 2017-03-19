@@ -27,7 +27,6 @@ from multiprocessing import Process, Lock
 
 pattern = re.compile(r'fuskator') # some url seems blocked
 
-base_dir=u"Down/"
 temp_i=0
 dir_name = ""
 image_type= ["&jpg"]
@@ -46,11 +45,13 @@ class Producer:
     total = 0
     downloaded = 0
     percent = 0
+    base_dir=u"Down/"
 # get all the list, with path and name
     def __init__(self):
         self.percent = 0
         self.total = 0
         self.downloaded = 0
+        self.base_dir=u"Down/"
     def check_make_dir(self, dir_name):
         if not os.path.exists(dir_name): # if folder exist, make it
             if os.name=='nt':
@@ -61,7 +62,7 @@ class Producer:
             pass
 
     def get_folder_name(self,obj):
-        dir_name=base_dir+ u''.join(e for e in obj["t_title"] if e.isalnum())  
+        dir_name=self.base_dir+ u''.join(e for e in obj["t_title"] if e.isalnum())  
         if dir_name.endswith("poweredbyphpwindnet"):  # remove php title
             dir_name=dir_name[:-19]
             if len(dir_name) > 100:
@@ -224,11 +225,10 @@ def main():
     #make_del_dir()
     #max_thread_count = sys.argv[2]
     #print "max_thread_count = " + str(max_thread_count)
-    p = Producer();
+    p = Producer()
     p.parse_jsonlines()
-    p.check_make_dir(base_dir);
+    p.check_make_dir(p.base_dir)
     # p.get_all_links()
-
 
     # q = Queue()
     # for i in range(20):
@@ -246,9 +246,10 @@ def main():
     #     print "active cout "+ str(threading.activeCount())
     #     Process(target=p.get_all_links, args=(lock,)).start()
 
-    pool = ThreadPool(20)
+    pool = ThreadPool(16)
     pool.map(p.get_all_links, list)
-
+    pool.close()
+    pool.join()
 
 if __name__ == "__main__":
     main()
