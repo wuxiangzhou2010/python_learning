@@ -18,7 +18,7 @@ import re
 
 import signal
 import sys
-import imghdr  
+import imghdr
 from threading import Thread
 from multiprocessing.pool import ThreadPool
 # from Queue import Queue
@@ -62,7 +62,7 @@ class Producer:
             pass
 
     def get_folder_name(self,obj):
-        dir_name=self.base_dir+ u''.join(e for e in obj["t_title"] if e.isalnum())  
+        dir_name=self.base_dir+ u''.join(e for e in obj["t_title"] if e.isalnum())
         if dir_name.endswith("poweredbyphpwindnet"):  # remove php title
             dir_name=dir_name[:-19]
             if len(dir_name) > 100:
@@ -72,7 +72,7 @@ class Producer:
             return unicode(dir_name)
 
     def verify_image(self,image_name):
-        try:    
+        try:
             v_image = Image.open(image_name)
             # print "v_image.verify() " +str(v_image.verify())
             # if  v_image.verify():
@@ -81,7 +81,7 @@ class Producer:
             # else:
                 # print "image is wrong"
         except Exception, e:
-            print "verify_image  ERROR_CODE:"+":"+unicode(e) 
+            print "verify_image  ERROR_CODE:"+":"+unicode(e)
             return False
         print "image is ok"
         return True
@@ -103,10 +103,10 @@ class Producer:
         # name= dir_name + "/"+ str(i) +ext
         # print "downloading",image
         if os.path.exists(image):
-            try:    
+            try:
                 v_image = Image.open(image)
             except Exception, e:
-                print "verify_image  ERROR_CODE:"+":"+unicode(e) 
+                print "verify_image  ERROR_CODE:"+":"+unicode(e)
                 os.remove(image)
                 # return True
             return False
@@ -115,7 +115,7 @@ class Producer:
             return True
 
     def get_all_boj_image(self, obj):
-        dirname = self.get_folder_name(obj) # get dir name 
+        dirname = self.get_folder_name(obj) # get dir name
         # self.check_make_dir(dirname) # mkdir
         image_list = obj["t_image_list"] # get image list
         l = len(image_list)
@@ -129,15 +129,15 @@ class Producer:
                     self.get_image_from_link(link, filename)
                 l = l-1
     def parse_jsonlines(self):
-        # with jsonlines.open('DaGaiErDeQiZhi.jsonlines') as reader:
-        with jsonlines.open(sys.argv[1]+'.jsonlines') as reader:
+        with jsonlines.open('XinShiDai.jsonlines') as reader:
+        #with jsonlines.open(sys.argv[1]+'.jsonlines') as reader:
             for obj in reader:# title & image list
                 list.append(obj.copy())
 		# get item number
         self.total = len(list)
 
 	# get download percentage
-    def print_progress(self): 
+    def print_progress(self):
         self.percent = self.downloaded*10/(self.total*0.1)
         print "%.4f%%  downloaded  %s/%s" % (self.percent, self.downloaded, self.total)
 
@@ -150,7 +150,7 @@ class Producer:
         self.get_all_boj_image(obj)
         self.downloaded = self.downloaded + 1
         self.print_progress()
-                
+
 
     def get_ext(url):
         """Return the filename extension from url, or ''."""
@@ -167,7 +167,7 @@ class Producer:
             # if imghdr.what('bass.gif')
             # downloaded = downloaded+1
         except Exception, e:
-            print "myopener EORROR name:" + name +" ERROR_CODE:"+":"+unicode(e) 
+            print "myopener EORROR name:" + name +" ERROR_CODE:"+":"+unicode(e)
     def thread_down(self):
         while threading.threading.activeCount()() >12:
             pass
@@ -185,11 +185,11 @@ class Producer:
 class Downloader:
     def __init__(self):
         pass
-    def threading_download2(image_list):    
+    def threading_download2(image_list):
         global temp_i
         global pattern
         length = len(image_list)
-        while temp_i < length:  
+        while temp_i < length:
             image = image_list[temp_i]
             #global name
             (return_code, name) = check_if_to_downloas(image)
@@ -203,11 +203,11 @@ class Downloader:
             mutex.acquire(blocking)
             temp_i += 1
             mutex.release()
-            
-                    
+
+
 class MyOpener(FancyURLopener, object):
     version = 'Mozilla/5.0 (Windows; U; Windows NT 5.1; it; rv:1.8.1.11) Gecko/20071127 Firefox/2.0.0.11'
-  
+
 def signal_handler(signal, frame):
         print('You pressed Ctrl+C!')
         sys.exit(0)
@@ -218,7 +218,7 @@ def worker():
         do_work(item)
         q.task_done()
 
-def main():    
+def main():
     signal.signal(signal.SIGINT, signal_handler)
     print('Press Ctrl+C')
     # signal.pause()
@@ -245,9 +245,13 @@ def main():
     # for i in range(10):
     #     print "active cout "+ str(threading.activeCount())
     #     Process(target=p.get_all_links, args=(lock,)).start()
-
-    pool = ThreadPool(16)
-    pool.map(p.get_all_links, list)
+	
+    pool = ThreadPool(32)
+    
+	# can not use CTRL+C, blocking
+	#pool.map(p.get_all_links, list)
+	# can use CTRL+C, non blocking
+    pool.map_async(p.get_all_links, range(400)).get(9999999)
     pool.close()
     pool.join()
 
